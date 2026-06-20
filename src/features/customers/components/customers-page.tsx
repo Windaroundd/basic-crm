@@ -184,7 +184,6 @@ export function CustomersPage() {
           setFormOpen(true)
         }}
         onDelete={setDeleting}
-        onManagePrices={setPricing}
       />
 
       <div className="flex items-center justify-between">
