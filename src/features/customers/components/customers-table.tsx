@@ -1,4 +1,11 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Trash2 } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Pencil,
+  Tags,
+  Trash2,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { CustomerSortField } from '../api'
+import type { CustomerListItem, CustomerSortField } from '../api'
 import { statusLabels, type CustomerStatus } from '../schemas'
 import type { Customer } from '../types'
 
@@ -23,7 +30,7 @@ const statusVariant: Record<
 }
 
 type Props = {
-  data: Customer[]
+  data: CustomerListItem[]
   isLoading: boolean
   canDelete: boolean
   sort: CustomerSortField
@@ -32,9 +39,10 @@ type Props = {
   onRowClick: (customer: Customer) => void
   onEdit: (customer: Customer) => void
   onDelete: (customer: Customer) => void
+  onManagePrices: (customer: Customer) => void
 }
 
-const COLS = 7
+const COLS = 8
 
 export function CustomersTable({
   data,
@@ -46,6 +54,7 @@ export function CustomersTable({
   onRowClick,
   onEdit,
   onDelete,
+  onManagePrices,
 }: Props) {
   const SortIcon =
     sort !== 'name' ? ArrowUpDown : dir === 'asc' ? ArrowUp : ArrowDown
@@ -68,6 +77,7 @@ export function CustomersTable({
             </TableHead>
             <TableHead>Điện thoại</TableHead>
             <TableHead>Địa chỉ</TableHead>
+            <TableHead>Giá riêng</TableHead>
             <TableHead>Ghi chú</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Tiềm năng</TableHead>
@@ -105,6 +115,17 @@ export function CustomersTable({
                 <TableCell>{customer.phone || '—'}</TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {customer.address || '—'}
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onManagePrices(customer)}
+                    title="Quản lý giá riêng"
+                  >
+                    <Tags />
+                    {customer.price_count > 0 ? customer.price_count : 'Đặt'}
+                  </Button>
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {customer.notes || '—'}

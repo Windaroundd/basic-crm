@@ -15,8 +15,10 @@ export type CustomerListParams = {
   dir: 'asc' | 'desc'
 }
 
+export type CustomerListItem = Customer & { price_count: number }
+
 export type CustomerListResult = {
-  rows: Customer[]
+  rows: CustomerListItem[]
   total: number
 }
 
@@ -46,7 +48,9 @@ export async function fetchCustomers(
 ): Promise<CustomerListResult> {
   const { q, status, lead, page, pageSize, sort, dir } = params
 
-  let query = supabase.from('customers').select('*', { count: 'exact' })
+  let query = supabase
+    .from('customers')
+    .select('*, customer_prices(count)', { count: 'exact' })
 
   const term = q?.trim().replace(/[,()]/g, ' ')
   if (term) {
@@ -65,7 +69,15 @@ export async function fetchCustomers(
 
   const { data, error, count } = await query
   if (error) throw error
-  return { rows: data ?? [], total: count ?? 0 }
+
+  const rows: CustomerListItem[] = (data ?? []).map((row) => {
+    const { customer_prices, ...rest } = row as Customer & {
+      customer_prices?: { count: number }[]
+    }
+    return { ...rest, price_count: customer_prices?.[0]?.count ?? 0 }
+  })
+
+  return { rows, total: count ?? 0 }
 }
 
 export type CustomerChartRow = Pick<
