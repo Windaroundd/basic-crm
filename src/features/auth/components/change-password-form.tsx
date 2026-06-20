@@ -11,7 +11,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/common/password-input'
 import { changePassword } from '../api'
 import { changePasswordSchema, type ChangePasswordValues } from '../schemas'
 
@@ -52,11 +52,7 @@ export function ChangePasswordForm() {
             <FormItem>
               <FormLabel>Mật khẩu hiện tại</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  {...field}
-                />
+                <PasswordInput autoComplete="current-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -69,7 +65,7 @@ export function ChangePasswordForm() {
             <FormItem>
               <FormLabel>Mật khẩu mới</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <PasswordInput autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -82,7 +78,7 @@ export function ChangePasswordForm() {
             <FormItem>
               <FormLabel>Xác nhận mật khẩu mới</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <PasswordInput autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

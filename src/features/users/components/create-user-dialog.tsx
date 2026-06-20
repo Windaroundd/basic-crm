@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/common/password-input'
 import {
   Select,
   SelectContent,
@@ -105,11 +106,7 @@ export function CreateUserDialog({ open, onOpenChange }: Props) {
                 <FormItem>
                   <FormLabel>Mật khẩu *</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="new-password"
-                      {...field}
-                    />
+                    <PasswordInput autoComplete="new-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

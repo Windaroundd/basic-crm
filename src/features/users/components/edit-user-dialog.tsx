@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/common/password-input'
 import {
   Select,
   SelectContent,
@@ -128,8 +129,7 @@ export function EditUserDialog({ user, onOpenChange }: Props) {
                 <FormItem>
                   <FormLabel>Mật khẩu mới</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
+                    <PasswordInput
                       placeholder="Để trống nếu không đổi"
                       autoComplete="new-password"
                       {...field}
