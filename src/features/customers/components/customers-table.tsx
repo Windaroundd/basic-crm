@@ -22,10 +22,6 @@ const statusVariant: Record<
   inactive: 'outline',
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN')
-}
-
 type Props = {
   data: Customer[]
   isLoading: boolean
@@ -33,11 +29,12 @@ type Props = {
   sort: CustomerSortField
   dir: 'asc' | 'desc'
   onToggleSort: (field: CustomerSortField) => void
+  onRowClick: (customer: Customer) => void
   onEdit: (customer: Customer) => void
   onDelete: (customer: Customer) => void
 }
 
-const COLS = 8
+const COLS = 7
 
 export function CustomersTable({
   data,
@@ -46,30 +43,12 @@ export function CustomersTable({
   sort,
   dir,
   onToggleSort,
+  onRowClick,
   onEdit,
   onDelete,
 }: Props) {
-  function SortButton({
-    field,
-    label,
-  }: {
-    field: CustomerSortField
-    label: string
-  }) {
-    const Icon =
-      sort !== field ? ArrowUpDown : dir === 'asc' ? ArrowUp : ArrowDown
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-2"
-        onClick={() => onToggleSort(field)}
-      >
-        {label}
-        <Icon />
-      </Button>
-    )
-  }
+  const SortIcon =
+    sort !== 'name' ? ArrowUpDown : dir === 'asc' ? ArrowUp : ArrowDown
 
   return (
     <div className="rounded-lg border">
@@ -77,16 +56,21 @@ export function CustomersTable({
         <TableHeader>
           <TableRow>
             <TableHead>
-              <SortButton field="name" label="Tên" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2"
+                onClick={() => onToggleSort('name')}
+              >
+                Tên
+                <SortIcon />
+              </Button>
             </TableHead>
-            <TableHead>Email</TableHead>
             <TableHead>Điện thoại</TableHead>
-            <TableHead>Công ty</TableHead>
+            <TableHead>Địa chỉ</TableHead>
+            <TableHead>Ghi chú</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Tiềm năng</TableHead>
-            <TableHead>
-              <SortButton field="created_at" label="Ngày tạo" />
-            </TableHead>
             <TableHead className="text-right">
               <span className="sr-only">Thao tác</span>
             </TableHead>
@@ -105,11 +89,19 @@ export function CustomersTable({
             ))
           ) : data.length ? (
             data.map((customer) => (
-              <TableRow key={customer.id}>
+              <TableRow
+                key={customer.id}
+                className="cursor-pointer"
+                onClick={() => onRowClick(customer)}
+              >
                 <TableCell className="font-medium">{customer.name}</TableCell>
-                <TableCell>{customer.email || '—'}</TableCell>
                 <TableCell>{customer.phone || '—'}</TableCell>
-                <TableCell>{customer.company || '—'}</TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {customer.address || '—'}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {customer.notes || '—'}
+                </TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -128,9 +120,11 @@ export function CustomersTable({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell>{formatDate(customer.created_at)}</TableCell>
                 <TableCell>
-                  <div className="flex justify-end gap-1">
+                  <div
+                    className="flex justify-end gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button
                       variant="ghost"
                       size="icon-sm"

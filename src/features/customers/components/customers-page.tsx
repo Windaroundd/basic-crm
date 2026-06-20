@@ -16,6 +16,7 @@ import type { CustomerListParams, CustomerSortField } from '../api'
 import { useCustomers } from '../hooks/use-customers'
 import { statusLabels } from '../schemas'
 import type { Customer } from '../types'
+import { CustomerDetailDialog } from './customer-detail-dialog'
 import { CustomerFormDialog } from './customer-form-dialog'
 import { CustomersTable } from './customers-table'
 import { DeleteCustomerDialog } from './delete-customer-dialog'
@@ -35,6 +36,7 @@ export function CustomersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Customer | null>(null)
   const [deleting, setDeleting] = useState<Customer | null>(null)
+  const [viewing, setViewing] = useState<Customer | null>(null)
 
   // Ô tìm kiếm: gõ -> debounce -> cập nhật URL (reset về trang 1)
   const [qInput, setQInput] = useState(search.q ?? '')
@@ -174,6 +176,7 @@ export function CustomersPage() {
         sort={sort}
         dir={dir}
         onToggleSort={toggleSort}
+        onRowClick={setViewing}
         onEdit={(customer) => {
           setEditing(customer)
           setFormOpen(true)
@@ -205,6 +208,18 @@ export function CustomersPage() {
           </Button>
         </div>
       </div>
+
+      <CustomerDetailDialog
+        customer={viewing}
+        onOpenChange={(open) => {
+          if (!open) setViewing(null)
+        }}
+        onEdit={(customer) => {
+          setViewing(null)
+          setEditing(customer)
+          setFormOpen(true)
+        }}
+      />
 
       <CustomerFormDialog
         open={formOpen}
