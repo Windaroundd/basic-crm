@@ -18,6 +18,7 @@ import { statusLabels } from '../schemas'
 import type { Customer } from '../types'
 import { CustomerDetailDialog } from './customer-detail-dialog'
 import { CustomerFormDialog } from './customer-form-dialog'
+import { CustomerPricesDialog } from './customer-prices-dialog'
 import { CustomersTable } from './customers-table'
 import { DeleteCustomerDialog } from './delete-customer-dialog'
 
@@ -37,6 +38,7 @@ export function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null)
   const [deleting, setDeleting] = useState<Customer | null>(null)
   const [viewing, setViewing] = useState<Customer | null>(null)
+  const [pricing, setPricing] = useState<Customer | null>(null)
 
   // Ô tìm kiếm: gõ -> debounce -> cập nhật URL (reset về trang 1)
   const [qInput, setQInput] = useState(search.q ?? '')
@@ -218,6 +220,17 @@ export function CustomersPage() {
           setViewing(null)
           setEditing(customer)
           setFormOpen(true)
+        }}
+        onManagePrices={(customer) => {
+          setViewing(null)
+          setPricing(customer)
+        }}
+      />
+
+      <CustomerPricesDialog
+        customer={pricing}
+        onOpenChange={(open) => {
+          if (!open) setPricing(null)
         }}
       />
 

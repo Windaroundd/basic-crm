@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database'
 import type { CustomerFormValues, CustomerStatus } from './schemas'
 import type { Customer } from './types'
 
@@ -138,4 +139,65 @@ export async function updateCustomer(id: string, values: CustomerFormValues) {
 export async function deleteCustomer(id: string) {
   const { error } = await supabase.from('customers').delete().eq('id', id)
   if (error) throw error
+}
+
+// ---- Giá riêng theo khách ----
+
+export type PricingProduct = Pick<
+  Database['public']['Tables']['products']['Row'],
+  'id' | 'name' | 'unit' | 'retail_price' | 'wholesale_price'
+>
+
+export async function fetchActiveProducts(): Promise<PricingProduct[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('id, name, unit, retail_price, wholesale_price')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export type CustomerPrice = { product_id: string; price: number }
+
+export async function fetchCustomerPrices(
+  customerId: string,
+): Promise<CustomerPrice[]> {
+  const { data, error } = await supabase
+    .from('customer_prices')
+    .select('product_id, price')
+    .eq('customer_id', customerId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function saveCustomerPrices(
+  customerId: string,
+  entries: { product_id: string; price: number | null }[],
+) {
+  const toUpsert = entries
+    .filter((e) => e.price != null)
+    .map((e) => ({
+      customer_id: customerId,
+      product_id: e.product_id,
+      price: e.price as number,
+    }))
+  const toDelete = entries
+    .filter((e) => e.price == null)
+    .map((e) => e.product_id)
+
+  if (toUpsert.length) {
+    const { error } = await supabase
+      .from('customer_prices')
+      .upsert(toUpsert, { onConflict: 'customer_id,product_id' })
+    if (error) throw error
+  }
+  if (toDelete.length) {
+    const { error } = await supabase
+      .from('customer_prices')
+      .delete()
+      .eq('customer_id', customerId)
+      .in('product_id', toDelete)
+    if (error) throw error
+  }
 }
