@@ -123,6 +123,19 @@ export function CustomerFormDialog({
     }
   }
 
+  // Thêm mới: lưu khách trước rồi mở bảng giá riêng cho khách vừa tạo.
+  const handlePricesClick = customer
+    ? () => onManagePrices(customer)
+    : form.handleSubmit(async (values) => {
+        try {
+          const created = await createMutation.mutateAsync(values)
+          onOpenChange(false)
+          onManagePrices(created)
+        } catch {
+          // lỗi đã được toast trong mutation
+        }
+      })
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -469,11 +482,11 @@ export function CustomerFormDialog({
                 type="button"
                 variant="outline"
                 className="sm:mr-auto"
-                disabled={!customer}
+                disabled={pending}
                 title={
-                  !customer ? 'Lưu khách hàng trước khi đặt giá riêng' : ''
+                  customer ? '' : 'Sẽ lưu khách hàng rồi mở bảng giá riêng'
                 }
-                onClick={() => customer && onManagePrices(customer)}
+                onClick={handlePricesClick}
               >
                 <Tags />
                 Giá riêng
