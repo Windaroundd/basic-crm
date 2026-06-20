@@ -101,49 +101,73 @@ export function CustomersPage() {
 
       <CustomerStats />
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Input
-          placeholder="Tìm theo tên, email, sđt, công ty…"
-          value={qInput}
-          onChange={(e) => setQInput(e.target.value)}
-          className="sm:max-w-xs"
-        />
-        <Select
-          value={statusValue}
-          onValueChange={(value) =>
-            setSearch({
-              status: value === 'all' ? undefined : (value as 'active'),
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Lọc trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            <SelectItem value="active">{statusLabels.active}</SelectItem>
-            <SelectItem value="inactive">{statusLabels.inactive}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          value={leadValue}
-          onValueChange={(value) =>
-            setSearch({
-              lead: value === 'all' ? undefined : value === 'lead',
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Lọc tiềm năng" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả khách</SelectItem>
-            <SelectItem value="lead">Chỉ tiềm năng</SelectItem>
-            <SelectItem value="normal">Không tiềm năng</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="grid flex-1 gap-1.5">
+          <span className="text-muted-foreground text-xs font-medium">
+            Tìm kiếm
+          </span>
+          <Input
+            placeholder="Tên, email, số điện thoại, công ty…"
+            value={qInput}
+            onChange={(e) => setQInput(e.target.value)}
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <span className="text-muted-foreground text-xs font-medium">
+            Trạng thái
+          </span>
+          <Select
+            items={{
+              all: 'Tất cả trạng thái',
+              active: statusLabels.active,
+              inactive: statusLabels.inactive,
+            }}
+            value={statusValue}
+            onValueChange={(value) =>
+              setSearch({
+                status: value === 'all' ? undefined : (value as 'active'),
+                page: 1,
+              })
+            }
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="active">{statusLabels.active}</SelectItem>
+              <SelectItem value="inactive">{statusLabels.inactive}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-1.5">
+          <span className="text-muted-foreground text-xs font-medium">
+            Phân loại
+          </span>
+          <Select
+            items={{
+              all: 'Tất cả khách',
+              lead: 'Chỉ tiềm năng',
+              normal: 'Không tiềm năng',
+            }}
+            value={leadValue}
+            onValueChange={(value) =>
+              setSearch({
+                lead: value === 'all' ? undefined : value === 'lead',
+                page: 1,
+              })
+            }
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả khách</SelectItem>
+              <SelectItem value="lead">Chỉ tiềm năng</SelectItem>
+              <SelectItem value="normal">Không tiềm năng</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <CustomersTable

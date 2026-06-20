@@ -99,7 +99,11 @@ export function EditUserDialog({ user, onOpenChange }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Vai trò</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    items={roleLabels}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Chọn vai trò" />

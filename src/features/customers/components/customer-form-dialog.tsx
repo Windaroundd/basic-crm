@@ -326,6 +326,7 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
                   <FormItem>
                     <FormLabel>Nguồn khách hàng</FormLabel>
                     <Select
+                      items={sourceLabels}
                       value={field.value || null}
                       onValueChange={(value) => field.onChange(value ?? '')}
                     >
@@ -353,6 +354,7 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
                   <FormItem>
                     <FormLabel>Giới tính</FormLabel>
                     <Select
+                      items={genderLabels}
                       value={field.value || null}
                       onValueChange={(value) => field.onChange(value ?? '')}
                     >
