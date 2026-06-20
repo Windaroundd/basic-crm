@@ -1,9 +1,13 @@
 export { SignInForm } from './components/sign-in-form'
 export { useSession } from './hooks/use-session'
-export { signIn, signUp, signOut, getSession } from './api'
+export { useAuth } from './hooks/use-auth'
 export {
-  signInSchema,
-  signUpSchema,
-  type SignInValues,
-  type SignUpValues,
-} from './schemas'
+  signIn,
+  signOut,
+  getSession,
+  getMyProfile,
+  emailForUsername,
+  USERNAME_DOMAIN,
+} from './api'
+export { signInSchema, type SignInValues } from './schemas'
+export { roleLabels, type Profile, type Role } from './types'

@@ -17,6 +17,11 @@ dist-ssr
 .env.*
 !.env.example
 
+# Local AI tooling (skills) — not part of the app
+.agents/
+.claude/
+skills-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

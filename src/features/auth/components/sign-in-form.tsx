@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,18 +17,23 @@ import { signIn } from '../api'
 import { signInSchema, type SignInValues } from '../schemas'
 
 export function SignInForm() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
   const form = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { username: '', password: '' },
   })
 
   const mutation = useMutation({
     mutationFn: signIn,
-    onSuccess: (data) => {
-      toast.success(`Welcome back, ${data.user.email}`)
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth'] })
+      toast.success('Đăng nhập thành công')
+      navigate({ to: '/customers' })
     },
-    onError: (error) => {
-      toast.error(error.message)
+    onError: () => {
+      toast.error('Sai tên đăng nhập hoặc mật khẩu')
     },
   })
 
@@ -40,15 +46,15 @@ export function SignInForm() {
       >
         <FormField
           control={form.control}
-          name="email"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Tên đăng nhập</FormLabel>
               <FormControl>
                 <Input
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
+                  placeholder="vd: phong"
+                  autoComplete="username"
+                  autoCapitalize="none"
                   {...field}
                 />
               </FormControl>
@@ -61,7 +67,7 @@ export function SignInForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Mật khẩu</FormLabel>
               <FormControl>
                 <Input
                   type="password"
@@ -74,7 +80,7 @@ export function SignInForm() {
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Signing in…' : 'Sign in'}
+          {mutation.isPending ? 'Đang đăng nhập…' : 'Đăng nhập'}
         </Button>
       </form>
     </Form>

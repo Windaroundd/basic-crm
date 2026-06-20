@@ -1,21 +1,54 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { useAuth, signOut, roleLabels } from '@/features/auth'
+import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 
 export function Header() {
+  const { isAuthenticated, isAdmin, profile, role } = useAuth()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  async function handleSignOut() {
+    await signOut()
+    queryClient.clear()
+    toast.success('Đã đăng xuất')
+    navigate({ to: '/signin' })
+  }
+
   return (
     <nav className="border-b">
       <div className="container mx-auto flex items-center gap-4 p-4">
-        <Link to="/" className="font-semibold [&.active]:underline">
-          Home
-        </Link>
-        <Link to="/dashboard" className="[&.active]:underline">
-          Dashboard
-        </Link>
-        <Link to="/signin" className="[&.active]:underline">
-          Sign in
-        </Link>
-        <div className="ml-auto">
+        {isAuthenticated && (
+          <Link to="/customers" className="font-semibold [&.active]:underline">
+            Khách hàng
+          </Link>
+        )}
+        {isAdmin && (
+          <Link to="/users" className="[&.active]:underline">
+            Người dùng
+          </Link>
+        )}
+        <div className="ml-auto flex items-center gap-3">
           <ThemeToggle />
+          {isAuthenticated ? (
+            <>
+              {profile && (
+                <span className="text-muted-foreground hidden text-sm sm:inline">
+                  {profile.username}
+                  {role ? ` · ${roleLabels[role]}` : ''}
+                </span>
+              )}
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                Đăng xuất
+              </Button>
+            </>
+          ) : (
+            <Link to="/signin" className="[&.active]:underline">
+              Đăng nhập
+            </Link>
+          )}
         </div>
       </div>
     </nav>

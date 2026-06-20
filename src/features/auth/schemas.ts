@@ -1,14 +1,8 @@
 import { z } from 'zod'
 
 export const signInSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  username: z.string().min(1, 'Nhập tên đăng nhập'),
+  password: z.string().min(1, 'Nhập mật khẩu'),
 })
 
 export type SignInValues = z.infer<typeof signInSchema>
-
-export const signUpSchema = signInSchema.extend({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-})
-
-export type SignUpValues = z.infer<typeof signUpSchema>
