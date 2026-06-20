@@ -31,6 +31,11 @@ export function Header() {
           </Link>
         )}
         {isAdmin && (
+          <Link to="/products" className="[&.active]:underline">
+            Sản phẩm
+          </Link>
+        )}
+        {isAdmin && (
           <Link to="/users" className="[&.active]:underline">
             Người dùng
           </Link>
