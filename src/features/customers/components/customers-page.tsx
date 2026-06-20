@@ -228,10 +228,15 @@ export function CustomersPage() {
       />
 
       <CustomerPricesDialog
-        customer={pricing}
+        open={!!pricing}
         onOpenChange={(open) => {
           if (!open) setPricing(null)
         }}
+        name={pricing?.name ?? ''}
+        customerType={
+          (pricing?.customer_type as 'retail' | 'wholesale') ?? 'retail'
+        }
+        customerId={pricing?.id}
       />
 
       <CustomerFormDialog

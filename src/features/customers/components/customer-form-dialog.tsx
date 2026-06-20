@@ -29,7 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { toast } from 'sonner'
+import { saveCustomerPrices } from '../api'
 import { useCreateCustomer, useUpdateCustomer } from '../hooks/use-customers'
+import { CustomerPricesDialog, type PriceEntry } from './customer-prices-dialog'
 import {
   customerFormSchema,
   customerSources,
@@ -79,6 +82,10 @@ export function CustomerFormDialog({
   const updateMutation = useUpdateCustomer()
   const pending = createMutation.isPending || updateMutation.isPending
   const [showMore, setShowMore] = useState(false)
+  const [pricesOpen, setPricesOpen] = useState(false)
+  const [pendingPrices, setPendingPrices] = useState<
+    { product_id: string; price: number }[]
+  >([])
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
@@ -88,6 +95,8 @@ export function CustomerFormDialog({
   useEffect(() => {
     if (!open) return
     setShowMore(false)
+    setPricesOpen(false)
+    setPendingPrices([])
     form.reset(
       customer
         ? {
@@ -113,405 +122,445 @@ export function CustomerFormDialog({
     )
   }, [open, customer, form])
 
-  function onSubmit(values: CustomerFormValues) {
+  async function onSubmit(values: CustomerFormValues) {
     if (isEdit && customer) {
       updateMutation.mutate(
         { id: customer.id, values },
         { onSuccess: () => onOpenChange(false) },
       )
-    } else {
-      createMutation.mutate(values, { onSuccess: () => onOpenChange(false) })
+      return
+    }
+    // Thêm mới: tạo khách trước, rồi lưu giá riêng (nếu có) — tuần tự.
+    try {
+      const created = await createMutation.mutateAsync(values)
+      if (pendingPrices.length) {
+        await saveCustomerPrices(created.id, pendingPrices)
+        toast.success('Đã lưu giá riêng')
+      }
+      onOpenChange(false)
+    } catch {
+      // lỗi tạo khách đã được toast trong mutation
     }
   }
 
-  // Thêm mới: lưu khách trước rồi mở bảng giá riêng cho khách vừa tạo.
-  const handlePricesClick = customer
-    ? () => onManagePrices(customer)
-    : form.handleSubmit(async (values) => {
-        try {
-          const created = await createMutation.mutateAsync(values)
-          onOpenChange(false)
-          onManagePrices(created)
-        } catch {
-          // lỗi đã được toast trong mutation
-        }
-      })
+  function handlePricesClick() {
+    if (customer) onManagePrices(customer)
+    else setPricesOpen(true)
+  }
+
+  function handleDraftPricesSaved(entries: PriceEntry[]) {
+    setPendingPrices(
+      entries.filter(
+        (e): e is { product_id: string; price: number } => e.price != null,
+      ),
+    )
+    setPricesOpen(false)
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? 'Sửa khách hàng' : 'Thêm khách hàng'}
-          </DialogTitle>
-          <DialogDescription>
-            <span className="font-medium">Tên</span>,{' '}
-            <span className="font-medium">Số điện thoại</span> và{' '}
-            <span className="font-medium">Địa chỉ</span> là bắt buộc, các mục
-            khác có thể bỏ trống.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="grid gap-4"
-            noValidate
-          >
-            {/* Thông tin bắt buộc */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tên *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nguyễn Văn A" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Số điện thoại *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="0901234567" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Địa chỉ *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Số nhà, đường, phường…" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {isEdit && (
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trạng thái</FormLabel>
-                    <Select
-                      items={statusLabels}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Chọn trạng thái" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="active">
-                          {statusLabels.active}
-                        </SelectItem>
-                        <SelectItem value="inactive">
-                          {statusLabels.inactive}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="customer_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Loại khách</FormLabel>
-                    <Select
-                      items={customerTypeLabels}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Chọn loại khách" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="retail">
-                          {customerTypeLabels.retail}
-                        </SelectItem>
-                        <SelectItem value="wholesale">
-                          {customerTypeLabels.wholesale}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="is_lead"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Khách tiềm năng</FormLabel>
-                    <div className="flex h-8 items-center">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) =>
-                            field.onChange(!!checked)
-                          }
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ghi chú</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Ghi chú thêm…" rows={3} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Thông tin thêm (không bắt buộc) — thu gọn mặc định */}
-            <button
-              type="button"
-              onClick={() => setShowMore((v) => !v)}
-              className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1 border-t pt-4 text-xs font-medium tracking-wide uppercase"
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {isEdit ? 'Sửa khách hàng' : 'Thêm khách hàng'}
+            </DialogTitle>
+            <DialogDescription>
+              <span className="font-medium">Tên</span>,{' '}
+              <span className="font-medium">Số điện thoại</span> và{' '}
+              <span className="font-medium">Địa chỉ</span> là bắt buộc, các mục
+              khác có thể bỏ trống.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="grid gap-4"
+              noValidate
             >
-              {showMore ? (
-                <ChevronDown className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )}
-              Thông tin thêm (không bắt buộc)
-            </button>
+              {/* Thông tin bắt buộc */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tên *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nguyễn Văn A" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {showMore && (
-              <>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="email@example.com"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="company"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Công ty</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Công ty TNHH..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Số điện thoại *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0901234567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="position"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Chức vụ</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Giám đốc, Trưởng phòng…"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tax_code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mã số thuế</FormLabel>
-                        <FormControl>
-                          <Input placeholder="0312345678" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Địa chỉ *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Số nhà, đường, phường…" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="website"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tỉnh/Thành phố</FormLabel>
-                        <FormControl>
-                          <Input placeholder="TP. Hồ Chí Minh" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="source"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nguồn khách hàng</FormLabel>
-                        <Select
-                          items={sourceLabels}
-                          value={field.value || null}
-                          onValueChange={(value) => field.onChange(value ?? '')}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Chọn nguồn" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {customerSources.map((source) => (
-                              <SelectItem key={source} value={source}>
-                                {sourceLabels[source]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Giới tính</FormLabel>
-                        <Select
-                          items={genderLabels}
-                          value={field.value || null}
-                          onValueChange={(value) => field.onChange(value ?? '')}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Chọn giới tính" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {genders.map((gender) => (
-                              <SelectItem key={gender} value={gender}>
-                                {genderLabels[gender]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+              {isEdit && (
                 <FormField
                   control={form.control}
-                  name="date_of_birth"
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ngày sinh</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
+                      <FormLabel>Trạng thái</FormLabel>
+                      <Select
+                        items={statusLabels}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn trạng thái" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">
+                            {statusLabels.active}
+                          </SelectItem>
+                          <SelectItem value="inactive">
+                            {statusLabels.inactive}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </>
-            )}
+              )}
 
-            <DialogFooter>
-              <Button
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="customer_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Loại khách</FormLabel>
+                      <Select
+                        items={customerTypeLabels}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn loại khách" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="retail">
+                            {customerTypeLabels.retail}
+                          </SelectItem>
+                          <SelectItem value="wholesale">
+                            {customerTypeLabels.wholesale}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_lead"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Khách tiềm năng</FormLabel>
+                      <div className="flex h-8 items-center">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(checked) =>
+                              field.onChange(!!checked)
+                            }
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ghi chú</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ghi chú thêm…"
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Thông tin thêm (không bắt buộc) — thu gọn mặc định */}
+              <button
                 type="button"
-                variant="outline"
-                className="sm:mr-auto"
-                disabled={pending}
-                title={
-                  customer ? '' : 'Sẽ lưu khách hàng rồi mở bảng giá riêng'
-                }
-                onClick={handlePricesClick}
+                onClick={() => setShowMore((v) => !v)}
+                className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1 border-t pt-4 text-xs font-medium tracking-wide uppercase"
               >
-                <Tags />
-                Giá riêng
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Hủy
-              </Button>
-              <Button type="submit" disabled={pending}>
-                {pending ? 'Đang lưu…' : 'Lưu'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                {showMore ? (
+                  <ChevronDown className="size-4" />
+                ) : (
+                  <ChevronRight className="size-4" />
+                )}
+                Thông tin thêm (không bắt buộc)
+              </button>
+
+              {showMore && (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="email@example.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Công ty</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Công ty TNHH..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="position"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chức vụ</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Giám đốc, Trưởng phòng…"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="tax_code"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mã số thuế</FormLabel>
+                          <FormControl>
+                            <Input placeholder="0312345678" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tỉnh/Thành phố</FormLabel>
+                          <FormControl>
+                            <Input placeholder="TP. Hồ Chí Minh" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="source"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nguồn khách hàng</FormLabel>
+                          <Select
+                            items={sourceLabels}
+                            value={field.value || null}
+                            onValueChange={(value) =>
+                              field.onChange(value ?? '')
+                            }
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Chọn nguồn" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {customerSources.map((source) => (
+                                <SelectItem key={source} value={source}>
+                                  {sourceLabels[source]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Giới tính</FormLabel>
+                          <Select
+                            items={genderLabels}
+                            value={field.value || null}
+                            onValueChange={(value) =>
+                              field.onChange(value ?? '')
+                            }
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Chọn giới tính" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {genders.map((gender) => (
+                                <SelectItem key={gender} value={gender}>
+                                  {genderLabels[gender]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="date_of_birth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ngày sinh</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="sm:mr-auto"
+                  disabled={pending}
+                  title={
+                    customer
+                      ? ''
+                      : 'Nhập giá riêng, sẽ lưu cùng khi bấm Lưu khách'
+                  }
+                  onClick={handlePricesClick}
+                >
+                  <Tags />
+                  Giá riêng
+                  {!customer && pendingPrices.length > 0
+                    ? ` (${pendingPrices.length})`
+                    : ''}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={pending}>
+                  {pending ? 'Đang lưu…' : 'Lưu'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {!isEdit && (
+        <CustomerPricesDialog
+          open={pricesOpen}
+          onOpenChange={setPricesOpen}
+          name={form.watch('name') || 'Khách mới'}
+          customerType={form.watch('customer_type')}
+          initial={pendingPrices}
+          onSaved={handleDraftPricesSaved}
+        />
+      )}
+    </>
   )
 }

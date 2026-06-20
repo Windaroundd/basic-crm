@@ -24,32 +24,49 @@ import {
   useCustomerPrices,
   useSaveCustomerPrices,
 } from '../hooks/use-customer-prices'
-import type { Customer } from '../types'
+
+export type PriceEntry = { product_id: string; price: number | null }
 
 type Props = {
-  customer: Customer | null
+  open: boolean
   onOpenChange: (open: boolean) => void
+  name: string
+  customerType: 'retail' | 'wholesale'
+  /** Có id => lưu thẳng DB (khách đã tồn tại). Không có => chế độ nháp. */
+  customerId?: string
+  /** Nháp: giá đã chọn từ trước (khi thêm khách mới). */
+  initial?: { product_id: string; price: number }[]
+  /** Nháp: trả giá về cho form cha xử lý khi lưu khách. */
+  onSaved?: (entries: PriceEntry[]) => void
 }
 
-export function CustomerPricesDialog({ customer, onOpenChange }: Props) {
-  const isWholesale = customer?.customer_type === 'wholesale'
+export function CustomerPricesDialog({
+  open,
+  onOpenChange,
+  name,
+  customerType,
+  customerId,
+  initial,
+  onSaved,
+}: Props) {
+  const isWholesale = customerType === 'wholesale'
   const { data: products, isLoading } = useActiveProducts()
-  const { data: prices } = useCustomerPrices(customer?.id)
-  const mutation = useSaveCustomerPrices(customer?.id)
+  const { data: livePrices } = useCustomerPrices(customerId)
+  const mutation = useSaveCustomerPrices(customerId)
 
-  // input riêng theo product_id (chuỗi rỗng = dùng giá mặc định)
   const [values, setValues] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (!customer) return
+    if (!open) return
+    const src = customerId ? livePrices : initial
     const map: Record<string, string> = {}
-    for (const p of prices ?? []) map[p.product_id] = String(p.price)
+    for (const p of src ?? []) map[p.product_id] = String(p.price)
     setValues(map)
-  }, [customer, prices])
+  }, [open, customerId, livePrices, initial])
 
   function handleSave() {
     if (!products) return
-    const entries = products.map((p) => {
+    const entries: PriceEntry[] = products.map((p) => {
       const raw = (values[p.id] ?? '').trim()
       const num = Number(raw)
       return {
@@ -57,14 +74,20 @@ export function CustomerPricesDialog({ customer, onOpenChange }: Props) {
         price: raw === '' || Number.isNaN(num) ? null : num,
       }
     })
-    mutation.mutate(entries, { onSuccess: () => onOpenChange(false) })
+
+    if (customerId) {
+      mutation.mutate(entries, { onSuccess: () => onOpenChange(false) })
+    } else {
+      onSaved?.(entries)
+      onOpenChange(false)
+    }
   }
 
   return (
-    <Dialog open={!!customer} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Giá riêng — {customer?.name}</DialogTitle>
+          <DialogTitle>Giá riêng — {name}</DialogTitle>
           <DialogDescription>
             Đặt giá riêng cho khách này. Để trống = dùng giá{' '}
             {isWholesale ? 'sỉ' : 'lẻ'} mặc định.
