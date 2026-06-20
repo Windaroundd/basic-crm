@@ -100,7 +100,7 @@ export function CustomerDetailDialog({
         {customer && (
           <>
             <DialogHeader>
-              <DialogTitle className="flex flex-wrap items-center gap-2">
+              <DialogTitle className="flex flex-wrap items-center gap-2 text-xl">
                 {customer.name}
                 <Badge
                   variant={customer.status === 'active' ? 'default' : 'outline'}
