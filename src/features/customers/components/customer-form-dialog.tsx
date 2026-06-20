@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/form'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -231,54 +232,58 @@ export function CustomerFormDialog({
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="customer_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Loại khách</FormLabel>
-                  <Select
-                    items={customerTypeLabels}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn loại khách" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="retail">
-                        {customerTypeLabels.retail}
-                      </SelectItem>
-                      <SelectItem value="wholesale">
-                        {customerTypeLabels.wholesale}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="customer_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Loại khách</FormLabel>
+                    <Select
+                      items={customerTypeLabels}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Chọn loại khách" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="retail">
+                          {customerTypeLabels.retail}
+                        </SelectItem>
+                        <SelectItem value="wholesale">
+                          {customerTypeLabels.wholesale}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="is_lead"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => field.onChange(!!checked)}
-                      />
-                    </FormControl>
-                    <FormLabel className="mb-0">Khách tiềm năng</FormLabel>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="is_lead"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Khách tiềm năng</FormLabel>
+                    <div className="flex h-8 items-center">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) =>
+                            field.onChange(!!checked)
+                          }
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -287,7 +292,7 @@ export function CustomerFormDialog({
                 <FormItem>
                   <FormLabel>Ghi chú</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ghi chú thêm…" {...field} />
+                    <Textarea placeholder="Ghi chú thêm…" rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
