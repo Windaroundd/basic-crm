@@ -238,6 +238,10 @@ export function CustomersPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         customer={editing ?? undefined}
+        onManagePrices={(customer) => {
+          setFormOpen(false)
+          setPricing(customer)
+        }}
       />
 
       <DeleteCustomerDialog

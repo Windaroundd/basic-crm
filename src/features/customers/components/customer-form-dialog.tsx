@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ChevronDown, ChevronRight, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -63,13 +64,20 @@ type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   customer?: Customer
+  onManagePrices: (customer: Customer) => void
 }
 
-export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
+export function CustomerFormDialog({
+  open,
+  onOpenChange,
+  customer,
+  onManagePrices,
+}: Props) {
   const isEdit = !!customer
   const createMutation = useCreateCustomer()
   const updateMutation = useUpdateCustomer()
   const pending = createMutation.isPending || updateMutation.isPending
+  const [showMore, setShowMore] = useState(false)
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
@@ -78,6 +86,7 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
 
   useEffect(() => {
     if (!open) return
+    setShowMore(false)
     form.reset(
       customer
         ? {
@@ -256,190 +265,219 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
               )}
             />
 
-            {/* Thông tin thêm (không bắt buộc) */}
-            <p className="text-muted-foreground border-t pt-4 text-xs font-medium tracking-wide uppercase">
+            {/* Thông tin thêm (không bắt buộc) — thu gọn mặc định */}
+            <button
+              type="button"
+              onClick={() => setShowMore((v) => !v)}
+              className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1 border-t pt-4 text-xs font-medium tracking-wide uppercase"
+            >
+              {showMore ? (
+                <ChevronDown className="size-4" />
+              ) : (
+                <ChevronRight className="size-4" />
+              )}
               Thông tin thêm (không bắt buộc)
-            </p>
+            </button>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="email@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Công ty</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Công ty TNHH..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {showMore && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="email@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="company"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Công ty</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Công ty TNHH..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Chức vụ</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Giám đốc, Trưởng phòng…" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="tax_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mã số thuế</FormLabel>
-                    <FormControl>
-                      <Input placeholder="0312345678" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="position"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Chức vụ</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Giám đốc, Trưởng phòng…"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="tax_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mã số thuế</FormLabel>
+                        <FormControl>
+                          <Input placeholder="0312345678" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tỉnh/Thành phố</FormLabel>
-                    <FormControl>
-                      <Input placeholder="TP. Hồ Chí Minh" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tỉnh/Thành phố</FormLabel>
+                        <FormControl>
+                          <Input placeholder="TP. Hồ Chí Minh" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="source"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nguồn khách hàng</FormLabel>
-                    <Select
-                      items={sourceLabels}
-                      value={field.value || null}
-                      onValueChange={(value) => field.onChange(value ?? '')}
-                    >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="source"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nguồn khách hàng</FormLabel>
+                        <Select
+                          items={sourceLabels}
+                          value={field.value || null}
+                          onValueChange={(value) => field.onChange(value ?? '')}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Chọn nguồn" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {customerSources.map((source) => (
+                              <SelectItem key={source} value={source}>
+                                {sourceLabels[source]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Giới tính</FormLabel>
+                        <Select
+                          items={genderLabels}
+                          value={field.value || null}
+                          onValueChange={(value) => field.onChange(value ?? '')}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Chọn giới tính" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {genders.map((gender) => (
+                              <SelectItem key={gender} value={gender}>
+                                {genderLabels[gender]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="date_of_birth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ngày sinh</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Chọn nguồn" />
-                        </SelectTrigger>
+                        <Input type="date" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {customerSources.map((source) => (
-                          <SelectItem key={source} value={source}>
-                            {sourceLabels[source]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Giới tính</FormLabel>
-                    <Select
-                      items={genderLabels}
-                      value={field.value || null}
-                      onValueChange={(value) => field.onChange(value ?? '')}
-                    >
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ghi chú</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Chọn giới tính" />
-                        </SelectTrigger>
+                        <Input placeholder="Ghi chú thêm…" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {genders.map((gender) => (
-                          <SelectItem key={gender} value={gender}>
-                            {genderLabels[gender]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="date_of_birth"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ngày sinh</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ghi chú</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ghi chú thêm…" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                className="sm:mr-auto"
+                disabled={!customer}
+                title={
+                  !customer ? 'Lưu khách hàng trước khi đặt giá riêng' : ''
+                }
+                onClick={() => customer && onManagePrices(customer)}
+              >
+                <Tags />
+                Giá riêng
+              </Button>
               <Button
                 type="button"
                 variant="outline"
