@@ -9,6 +9,7 @@ import {
   createCustomer,
   deleteCustomer,
   fetchCustomers,
+  fetchCustomerChartRows,
   fetchCustomerStats,
   updateCustomer,
   type CustomerListParams,
@@ -27,6 +28,13 @@ export function useCustomerStats() {
   return useQuery({
     queryKey: ['customers', 'stats'],
     queryFn: fetchCustomerStats,
+  })
+}
+
+export function useCustomerCharts() {
+  return useQuery({
+    queryKey: ['customers', 'charts'],
+    queryFn: fetchCustomerChartRows,
   })
 }
 

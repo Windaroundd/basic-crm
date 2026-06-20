@@ -66,6 +66,19 @@ export async function fetchCustomers(
   return { rows: data ?? [], total: count ?? 0 }
 }
 
+export type CustomerChartRow = Pick<
+  Customer,
+  'created_at' | 'source' | 'status' | 'is_lead'
+>
+
+export async function fetchCustomerChartRows(): Promise<CustomerChartRow[]> {
+  const { data, error } = await supabase
+    .from('customers')
+    .select('created_at, source, status, is_lead')
+  if (error) throw error
+  return data ?? []
+}
+
 export type CustomerStats = {
   total: number
   active: number

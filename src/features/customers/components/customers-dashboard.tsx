@@ -1,3 +1,4 @@
+import { CustomerCharts } from './customer-charts'
 import { CustomerStats } from './customer-stats'
 
 export function CustomersDashboard() {
@@ -8,6 +9,7 @@ export function CustomersDashboard() {
         <p className="text-muted-foreground text-sm">Thống kê khách hàng</p>
       </div>
       <CustomerStats />
+      <CustomerCharts />
     </div>
   )
 }
