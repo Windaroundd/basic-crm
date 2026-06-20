@@ -30,6 +30,29 @@ export async function getSession() {
   return data.session
 }
 
+export async function changePassword({
+  currentPassword,
+  newPassword,
+}: {
+  currentPassword: string
+  newPassword: string
+}) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email) throw new Error('Phiên đăng nhập đã hết hạn')
+
+  // Xác minh mật khẩu hiện tại bằng cách đăng nhập lại
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  })
+  if (verifyError) throw new Error('Mật khẩu hiện tại không đúng')
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
+}
+
 export async function getMyProfile(): Promise<Profile | null> {
   const {
     data: { user },

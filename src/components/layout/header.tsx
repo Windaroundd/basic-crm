@@ -35,10 +35,13 @@ export function Header() {
           {isAuthenticated ? (
             <>
               {profile && (
-                <span className="text-muted-foreground hidden text-sm sm:inline">
+                <Link
+                  to="/account"
+                  className="text-muted-foreground hover:text-foreground [&.active]:text-foreground hidden text-sm sm:inline [&.active]:underline"
+                >
                   {profile.username}
                   {role ? ` · ${roleLabels[role]}` : ''}
-                </span>
+                </Link>
               )}
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Đăng xuất
