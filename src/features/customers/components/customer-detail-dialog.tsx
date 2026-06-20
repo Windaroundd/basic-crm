@@ -138,6 +138,11 @@ export function CustomerDetailDialog({
                 }
               />
               <Field
+                label="Ghi chú"
+                value={customer.notes}
+                copy={customer.notes}
+              />
+              <Field
                 label="Email"
                 value={customer.email}
                 copy={customer.email}
@@ -213,11 +218,6 @@ export function CustomerDetailDialog({
                     ? genderLabels[customer.gender as Gender]
                     : null
                 }
-              />
-              <Field
-                label="Ghi chú"
-                value={customer.notes}
-                copy={customer.notes}
               />
               <Field
                 label="Ngày tạo"

@@ -278,6 +278,20 @@ export function CustomerFormDialog({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ghi chú</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ghi chú thêm…" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Thông tin thêm (không bắt buộc) — thu gọn mặc định */}
             <button
               type="button"
@@ -455,20 +469,6 @@ export function CustomerFormDialog({
                       <FormLabel>Ngày sinh</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ghi chú</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ghi chú thêm…" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
