@@ -68,13 +68,14 @@ export function CustomerDetailDialog({
             </DialogHeader>
 
             <div className="divide-y">
+              <Field label="Điện thoại" value={customer.phone} />
+              <Field label="Địa chỉ" value={customer.address} />
               <Field
                 label="Loại khách"
                 value={
                   customerTypeLabels[customer.customer_type as CustomerType]
                 }
               />
-              <Field label="Điện thoại" value={customer.phone} />
               <Field label="Email" value={customer.email} />
               <Field label="Công ty" value={customer.company} />
               <Field label="Chức vụ" value={customer.position} />
@@ -94,7 +95,6 @@ export function CustomerDetailDialog({
                   ) : null
                 }
               />
-              <Field label="Địa chỉ" value={customer.address} />
               <Field label="Tỉnh/Thành phố" value={customer.city} />
               <Field
                 label="Nguồn"
