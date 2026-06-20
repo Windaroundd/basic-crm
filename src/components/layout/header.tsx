@@ -20,13 +20,13 @@ export function Header() {
   return (
     <nav className="border-b">
       <div className="container mx-auto flex items-center gap-4 p-4">
-        {isAuthenticated && (
+        {isAdmin && (
           <Link to="/dashboard" className="font-semibold [&.active]:underline">
             Tổng quan
           </Link>
         )}
         {isAuthenticated && (
-          <Link to="/customers" className="[&.active]:underline">
+          <Link to="/customers" className="font-semibold [&.active]:underline">
             Khách hàng
           </Link>
         )}
