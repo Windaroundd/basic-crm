@@ -25,7 +25,7 @@ const statusVariant: Record<
 type Props = {
   data: Customer[]
   isLoading: boolean
-  canDelete: boolean
+  canManage: boolean
   sort: CustomerSortField
   dir: 'asc' | 'desc'
   onToggleSort: (field: CustomerSortField) => void
@@ -39,7 +39,7 @@ const COLS = 7
 export function CustomersTable({
   data,
   isLoading,
-  canDelete,
+  canManage,
   sort,
   dir,
   onToggleSort,
@@ -128,19 +128,19 @@ export function CustomersTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <div
-                    className="flex justify-end gap-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => onEdit(customer)}
-                      aria-label="Sửa"
+                  {canManage && (
+                    <div
+                      className="flex justify-end gap-1"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Pencil />
-                    </Button>
-                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => onEdit(customer)}
+                        aria-label="Sửa"
+                      >
+                        <Pencil />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon-sm"
@@ -149,8 +149,8 @@ export function CustomersTable({
                       >
                         <Trash2 />
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             ))

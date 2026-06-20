@@ -91,15 +91,17 @@ export function CustomersPage() {
             Quản lý thông tin khách hàng
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null)
-            setFormOpen(true)
-          }}
-        >
-          <Plus />
-          Thêm khách hàng
-        </Button>
+        {isAdmin && (
+          <Button
+            onClick={() => {
+              setEditing(null)
+              setFormOpen(true)
+            }}
+          >
+            <Plus />
+            Thêm khách hàng
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -174,7 +176,7 @@ export function CustomersPage() {
       <CustomersTable
         data={rows}
         isLoading={isLoading || isFetching}
-        canDelete={isAdmin}
+        canManage={isAdmin}
         sort={sort}
         dir={dir}
         onToggleSort={toggleSort}
@@ -225,6 +227,7 @@ export function CustomersPage() {
           setViewing(null)
           setPricing(customer)
         }}
+        canManage={isAdmin}
       />
 
       <CustomerPricesDialog

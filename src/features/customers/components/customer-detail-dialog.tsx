@@ -86,6 +86,7 @@ type Props = {
   onOpenChange: (open: boolean) => void
   onEdit: (customer: Customer) => void
   onManagePrices: (customer: Customer) => void
+  canManage: boolean
 }
 
 export function CustomerDetailDialog({
@@ -93,6 +94,7 @@ export function CustomerDetailDialog({
   onOpenChange,
   onEdit,
   onManagePrices,
+  canManage,
 }: Props) {
   return (
     <Dialog open={!!customer} onOpenChange={onOpenChange}>
@@ -234,16 +236,20 @@ export function CustomerDetailDialog({
               >
                 Đóng
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onManagePrices(customer)}
-              >
-                Giá riêng
-              </Button>
-              <Button type="button" onClick={() => onEdit(customer)}>
-                Sửa
-              </Button>
+              {canManage && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onManagePrices(customer)}
+                >
+                  Giá riêng
+                </Button>
+              )}
+              {canManage && (
+                <Button type="button" onClick={() => onEdit(customer)}>
+                  Sửa
+                </Button>
+              )}
             </DialogFooter>
           </>
         )}
