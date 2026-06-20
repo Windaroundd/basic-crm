@@ -31,6 +31,7 @@ import { useCreateCustomer, useUpdateCustomer } from '../hooks/use-customers'
 import {
   customerFormSchema,
   customerSources,
+  customerTypeLabels,
   genders,
   genderLabels,
   sourceLabels,
@@ -44,6 +45,7 @@ const EMPTY: CustomerFormValues = {
   phone: '',
   address: '',
   status: 'active',
+  customer_type: 'retail',
   is_lead: false,
   email: '',
   company: '',
@@ -83,6 +85,8 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
             phone: customer.phone ?? '',
             address: customer.address ?? '',
             status: customer.status as CustomerFormValues['status'],
+            customer_type:
+              customer.customer_type as CustomerFormValues['customer_type'],
             is_lead: customer.is_lead,
             email: customer.email ?? '',
             company: customer.company ?? '',
@@ -195,6 +199,36 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: Props) {
                       </SelectItem>
                       <SelectItem value="inactive">
                         {statusLabels.inactive}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="customer_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Loại khách</FormLabel>
+                  <Select
+                    items={customerTypeLabels}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn loại khách" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="retail">
+                        {customerTypeLabels.retail}
+                      </SelectItem>
+                      <SelectItem value="wholesale">
+                        {customerTypeLabels.wholesale}
                       </SelectItem>
                     </SelectContent>
                   </Select>

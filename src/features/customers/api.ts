@@ -23,6 +23,7 @@ function normalize(values: CustomerFormValues) {
   return {
     name: values.name.trim(),
     status: values.status,
+    customer_type: values.customer_type,
     is_lead: values.is_lead,
     email: values.email?.trim() || null,
     phone: values.phone?.trim() || null,

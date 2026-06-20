@@ -9,11 +9,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  customerTypeLabels,
   genderLabels,
   sourceLabels,
   statusLabels,
   type CustomerSource,
   type CustomerStatus,
+  type CustomerType,
   type Gender,
 } from '../schemas'
 import type { Customer } from '../types'
@@ -59,10 +61,19 @@ export function CustomerDetailDialog({
                 {customer.is_lead && (
                   <Badge variant="secondary">Tiềm năng</Badge>
                 )}
+                {customer.customer_type === 'wholesale' && (
+                  <Badge variant="secondary">Sỉ</Badge>
+                )}
               </DialogTitle>
             </DialogHeader>
 
             <div className="divide-y">
+              <Field
+                label="Loại khách"
+                value={
+                  customerTypeLabels[customer.customer_type as CustomerType]
+                }
+              />
               <Field label="Điện thoại" value={customer.phone} />
               <Field label="Email" value={customer.email} />
               <Field label="Công ty" value={customer.company} />

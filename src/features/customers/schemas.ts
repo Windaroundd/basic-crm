@@ -25,6 +25,14 @@ export const sourceLabels: Record<CustomerSource, string> = {
   other: 'Khác',
 }
 
+export const customerTypes = ['retail', 'wholesale'] as const
+export type CustomerType = (typeof customerTypes)[number]
+
+export const customerTypeLabels: Record<CustomerType, string> = {
+  retail: 'Lẻ',
+  wholesale: 'Sỉ',
+}
+
 export const genders = ['male', 'female', 'other'] as const
 export type Gender = (typeof genders)[number]
 
@@ -40,6 +48,7 @@ export const customerFormSchema = z.object({
   phone: z.string().trim().min(1, 'Nhập số điện thoại'),
   address: z.string().trim().min(1, 'Nhập địa chỉ'),
   status: z.enum(customerStatuses),
+  customer_type: z.enum(customerTypes),
   is_lead: z.boolean(),
   // Optional
   email: z

@@ -45,6 +45,7 @@ export type Database = {
           city: string | null
           company: string | null
           created_at: string
+          customer_type: string
           date_of_birth: string | null
           email: string | null
           gender: string | null
@@ -64,6 +65,7 @@ export type Database = {
           city?: string | null
           company?: string | null
           created_at?: string
+          customer_type?: string
           date_of_birth?: string | null
           email?: string | null
           gender?: string | null
@@ -83,6 +85,7 @@ export type Database = {
           city?: string | null
           company?: string | null
           created_at?: string
+          customer_type?: string
           date_of_birth?: string | null
           email?: string | null
           gender?: string | null

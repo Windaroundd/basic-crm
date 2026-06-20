@@ -94,7 +94,14 @@ export function CustomersTable({
                 className="cursor-pointer"
                 onClick={() => onRowClick(customer)}
               >
-                <TableCell className="font-medium">{customer.name}</TableCell>
+                <TableCell className="font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    {customer.name}
+                    {customer.customer_type === 'wholesale' && (
+                      <Badge variant="secondary">Sỉ</Badge>
+                    )}
+                  </span>
+                </TableCell>
                 <TableCell>{customer.phone || '—'}</TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {customer.address || '—'}
