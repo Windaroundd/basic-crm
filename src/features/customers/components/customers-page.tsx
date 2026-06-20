@@ -172,7 +172,7 @@ export function CustomersPage() {
 
       <CustomersTable
         data={rows}
-        isLoading={isLoading}
+        isLoading={isLoading || isFetching}
         canDelete={isAdmin}
         sort={sort}
         dir={dir}
@@ -185,9 +185,7 @@ export function CustomersPage() {
       />
 
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {total} khách hàng{isFetching ? ' · đang tải…' : ''}
-        </p>
+        <p className="text-muted-foreground text-sm">{total} khách hàng</p>
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-sm">
             Trang {page}/{totalPages}
