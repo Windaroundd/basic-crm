@@ -17,7 +17,6 @@ import { useCustomers } from '../hooks/use-customers'
 import { statusLabels } from '../schemas'
 import type { Customer } from '../types'
 import { CustomerFormDialog } from './customer-form-dialog'
-import { CustomerStats } from './customer-stats'
 import { CustomersTable } from './customers-table'
 import { DeleteCustomerDialog } from './delete-customer-dialog'
 
@@ -98,8 +97,6 @@ export function CustomersPage() {
           Thêm khách hàng
         </Button>
       </div>
-
-      <CustomerStats />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="grid flex-1 gap-1.5">

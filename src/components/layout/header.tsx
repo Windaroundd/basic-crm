@@ -21,7 +21,12 @@ export function Header() {
     <nav className="border-b">
       <div className="container mx-auto flex items-center gap-4 p-4">
         {isAuthenticated && (
-          <Link to="/customers" className="font-semibold [&.active]:underline">
+          <Link to="/dashboard" className="font-semibold [&.active]:underline">
+            Tổng quan
+          </Link>
+        )}
+        {isAuthenticated && (
+          <Link to="/customers" className="[&.active]:underline">
             Khách hàng
           </Link>
         )}

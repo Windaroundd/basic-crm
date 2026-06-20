@@ -1,4 +1,5 @@
 export { CustomersPage } from './components/customers-page'
+export { CustomersDashboard } from './components/customers-dashboard'
 export {
   useCustomers,
   useCreateCustomer,
