@@ -37,7 +37,7 @@ export function Header() {
         )}
         {isAdmin && (
           <Link to="/users" className="[&.active]:underline">
-            Người dùng
+            Nhân viên
           </Link>
         )}
         <div className="ml-auto flex items-center gap-3">

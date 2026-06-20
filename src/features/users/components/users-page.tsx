@@ -19,7 +19,7 @@ export function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Người dùng</h1>
+          <h1 className="text-2xl font-semibold">Nhân viên</h1>
           <p className="text-muted-foreground text-sm">
             Quản lý tài khoản và phân quyền
           </p>
