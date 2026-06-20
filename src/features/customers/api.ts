@@ -1,6 +1,23 @@
 import { supabase } from '@/lib/supabase'
-import type { CustomerFormValues } from './schemas'
+import type { CustomerFormValues, CustomerStatus } from './schemas'
 import type { Customer } from './types'
+
+export type CustomerSortField = 'created_at' | 'name'
+
+export type CustomerListParams = {
+  q?: string
+  status?: CustomerStatus
+  lead?: boolean
+  page: number
+  pageSize: number
+  sort: CustomerSortField
+  dir: 'asc' | 'desc'
+}
+
+export type CustomerListResult = {
+  rows: Customer[]
+  total: number
+}
 
 function normalize(values: CustomerFormValues) {
   return {
@@ -22,13 +39,65 @@ function normalize(values: CustomerFormValues) {
   }
 }
 
-export async function fetchCustomers(): Promise<Customer[]> {
-  const { data, error } = await supabase
-    .from('customers')
-    .select('*')
-    .order('created_at', { ascending: false })
+export async function fetchCustomers(
+  params: CustomerListParams,
+): Promise<CustomerListResult> {
+  const { q, status, lead, page, pageSize, sort, dir } = params
+
+  let query = supabase.from('customers').select('*', { count: 'exact' })
+
+  const term = q?.trim().replace(/[,()]/g, ' ')
+  if (term) {
+    const like = `%${term}%`
+    query = query.or(
+      `name.ilike.${like},email.ilike.${like},phone.ilike.${like},company.ilike.${like}`,
+    )
+  }
+  if (status) query = query.eq('status', status)
+  if (typeof lead === 'boolean') query = query.eq('is_lead', lead)
+
+  const from = (page - 1) * pageSize
+  query = query
+    .order(sort, { ascending: dir === 'asc' })
+    .range(from, from + pageSize - 1)
+
+  const { data, error, count } = await query
   if (error) throw error
-  return data
+  return { rows: data ?? [], total: count ?? 0 }
+}
+
+export type CustomerStats = {
+  total: number
+  active: number
+  lead: number
+  newThisMonth: number
+}
+
+export async function fetchCustomerStats(): Promise<CustomerStats> {
+  const base = () =>
+    supabase.from('customers').select('*', { count: 'exact', head: true })
+
+  const now = new Date()
+  const monthStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1,
+  ).toISOString()
+
+  const [total, active, lead, newThisMonth] = await Promise.all(
+    [
+      base(),
+      base().eq('status', 'active'),
+      base().eq('is_lead', true),
+      base().gte('created_at', monthStart),
+    ].map(async (q) => {
+      const { count, error } = await q
+      if (error) throw error
+      return count ?? 0
+    }),
+  )
+
+  return { total, active, lead, newThisMonth }
 }
 
 export async function createCustomer(values: CustomerFormValues) {

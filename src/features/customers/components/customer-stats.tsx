@@ -1,30 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { Customer } from '../types'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useCustomerStats } from '../hooks/use-customers'
 
-function isThisMonth(iso: string) {
-  const date = new Date(iso)
-  const now = new Date()
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth()
-  )
-}
+export function CustomerStats() {
+  const { data, isLoading } = useCustomerStats()
 
-export function CustomerStats({ customers }: { customers: Customer[] }) {
   const stats = [
-    { label: 'Tổng khách hàng', value: customers.length },
-    {
-      label: 'Đang hoạt động',
-      value: customers.filter((c) => c.status === 'active').length,
-    },
-    {
-      label: 'Khách tiềm năng',
-      value: customers.filter((c) => c.is_lead).length,
-    },
-    {
-      label: 'Mới trong tháng',
-      value: customers.filter((c) => isThisMonth(c.created_at)).length,
-    },
+    { label: 'Tổng khách hàng', value: data?.total },
+    { label: 'Đang hoạt động', value: data?.active },
+    { label: 'Khách tiềm năng', value: data?.lead },
+    { label: 'Mới trong tháng', value: data?.newThisMonth },
   ]
 
   return (
@@ -37,7 +22,11 @@ export function CustomerStats({ customers }: { customers: Customer[] }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">{stat.value}</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12" />
+            ) : (
+              <p className="text-2xl font-semibold">{stat.value ?? 0}</p>
+            )}
           </CardContent>
         </Card>
       ))}

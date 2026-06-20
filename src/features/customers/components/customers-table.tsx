@@ -1,25 +1,6 @@
-import { useMemo, useState } from 'react'
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type SortingState,
-} from '@tanstack/react-table'
-import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -29,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import type { CustomerSortField } from '../api'
 import { statusLabels, type CustomerStatus } from '../schemas'
 import type { Customer } from '../types'
 
@@ -48,254 +30,141 @@ type Props = {
   data: Customer[]
   isLoading: boolean
   canDelete: boolean
+  sort: CustomerSortField
+  dir: 'asc' | 'desc'
+  onToggleSort: (field: CustomerSortField) => void
   onEdit: (customer: Customer) => void
   onDelete: (customer: Customer) => void
 }
+
+const COLS = 8
 
 export function CustomersTable({
   data,
   isLoading,
   canDelete,
+  sort,
+  dir,
+  onToggleSort,
   onEdit,
   onDelete,
 }: Props) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [globalFilter, setGlobalFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'all'>(
-    'all',
-  )
-  const [leadFilter, setLeadFilter] = useState<'all' | 'lead' | 'normal'>('all')
-
-  const columns = useMemo<ColumnDef<Customer>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Tên
-            <ArrowUpDown />
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.name}</span>
-        ),
-      },
-      {
-        accessorKey: 'email',
-        header: 'Email',
-        cell: ({ row }) => row.original.email || '—',
-      },
-      {
-        accessorKey: 'phone',
-        header: 'Điện thoại',
-        cell: ({ row }) => row.original.phone || '—',
-      },
-      {
-        accessorKey: 'company',
-        header: 'Công ty',
-        cell: ({ row }) => row.original.company || '—',
-      },
-      {
-        accessorKey: 'status',
-        header: 'Trạng thái',
-        filterFn: 'equals',
-        cell: ({ row }) => {
-          const status = row.original.status as CustomerStatus
-          return (
-            <Badge variant={statusVariant[status] ?? 'outline'}>
-              {statusLabels[status] ?? status}
-            </Badge>
-          )
-        },
-      },
-      {
-        accessorKey: 'is_lead',
-        header: 'Tiềm năng',
-        filterFn: 'equals',
-        cell: ({ row }) =>
-          row.original.is_lead ? (
-            <Badge variant="secondary">Tiềm năng</Badge>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          ),
-      },
-      {
-        accessorKey: 'created_at',
-        header: 'Ngày tạo',
-        cell: ({ row }) => formatDate(row.original.created_at),
-      },
-      {
-        id: 'actions',
-        header: () => <span className="sr-only">Thao tác</span>,
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => onEdit(row.original)}
-              aria-label="Sửa"
-            >
-              <Pencil />
-            </Button>
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => onDelete(row.original)}
-                aria-label="Xóa"
-              >
-                <Trash2 />
-              </Button>
-            )}
-          </div>
-        ),
-      },
-    ],
-    [canDelete, onEdit, onDelete],
-  )
-
-  const table = useReactTable({
-    data,
-    columns,
-    state: { sorting, globalFilter },
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 10 } },
-  })
-
-  function handleStatusChange(value: CustomerStatus | 'all' | null) {
-    const next = value ?? 'all'
-    setStatusFilter(next)
-    table.getColumn('status')?.setFilterValue(next === 'all' ? undefined : next)
-  }
-
-  function handleLeadChange(value: 'all' | 'lead' | 'normal' | null) {
-    const next = value ?? 'all'
-    setLeadFilter(next)
-    table
-      .getColumn('is_lead')
-      ?.setFilterValue(next === 'all' ? undefined : next === 'lead')
+  function SortButton({
+    field,
+    label,
+  }: {
+    field: CustomerSortField
+    label: string
+  }) {
+    const Icon =
+      sort !== field ? ArrowUpDown : dir === 'asc' ? ArrowUp : ArrowDown
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2"
+        onClick={() => onToggleSort(field)}
+      >
+        {label}
+        <Icon />
+      </Button>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Input
-          placeholder="Tìm theo tên, email, sđt, công ty…"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="sm:max-w-xs"
-        />
-        <Select value={statusFilter} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Lọc trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            <SelectItem value="active">{statusLabels.active}</SelectItem>
-            <SelectItem value="inactive">{statusLabels.inactive}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={leadFilter} onValueChange={handleLeadChange}>
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Lọc tiềm năng" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả khách</SelectItem>
-            <SelectItem value="lead">Chỉ tiềm năng</SelectItem>
-            <SelectItem value="normal">Không tiềm năng</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
+    <div className="rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <SortButton field="name" label="Tên" />
+            </TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Điện thoại</TableHead>
+            <TableHead>Công ty</TableHead>
+            <TableHead>Trạng thái</TableHead>
+            <TableHead>Tiềm năng</TableHead>
+            <TableHead>
+              <SortButton field="created_at" label="Ngày tạo" />
+            </TableHead>
+            <TableHead className="text-right">
+              <span className="sr-only">Thao tác</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: COLS }).map((_, j) => (
+                  <TableCell key={j}>
+                    <Skeleton className="h-5 w-full" />
+                  </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {columns.map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-5 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  Không có khách hàng nào.
+            ))
+          ) : data.length ? (
+            data.map((customer) => (
+              <TableRow key={customer.id}>
+                <TableCell className="font-medium">{customer.name}</TableCell>
+                <TableCell>{customer.email || '—'}</TableCell>
+                <TableCell>{customer.phone || '—'}</TableCell>
+                <TableCell>{customer.company || '—'}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      statusVariant[customer.status as CustomerStatus] ??
+                      'outline'
+                    }
+                  >
+                    {statusLabels[customer.status as CustomerStatus] ??
+                      customer.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {customer.is_lead ? (
+                    <Badge variant="secondary">Tiềm năng</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell>{formatDate(customer.created_at)}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onEdit(customer)}
+                      aria-label="Sửa"
+                    >
+                      <Pencil />
+                    </Button>
+                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => onDelete(customer)}
+                        aria-label="Xóa"
+                      >
+                        <Trash2 />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {table.getFilteredRowModel().rows.length} khách hàng
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Trước
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Sau
-          </Button>
-        </div>
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={COLS}
+                className="text-muted-foreground h-24 text-center"
+              >
+                Không có khách hàng nào.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

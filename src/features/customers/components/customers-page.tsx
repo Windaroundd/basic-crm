@@ -1,32 +1,83 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getRouteApi } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useAuth } from '@/features/auth'
+import { useDebounce } from '@/hooks/use-debounce'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import type { CustomerListParams, CustomerSortField } from '../api'
 import { useCustomers } from '../hooks/use-customers'
+import { statusLabels } from '../schemas'
 import type { Customer } from '../types'
 import { CustomerFormDialog } from './customer-form-dialog'
 import { CustomerStats } from './customer-stats'
 import { CustomersTable } from './customers-table'
 import { DeleteCustomerDialog } from './delete-customer-dialog'
 
+const PAGE_SIZE = 10
+const route = getRouteApi('/customers')
+
 export function CustomersPage() {
   const { isAdmin } = useAuth()
-  const { data, isLoading } = useCustomers()
+  const search = route.useSearch()
+  const navigate = route.useNavigate()
+
+  const page = search.page ?? 1
+  const sort = search.sort ?? 'created_at'
+  const dir = search.dir ?? 'desc'
+
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Customer | null>(null)
   const [deleting, setDeleting] = useState<Customer | null>(null)
 
-  const customers = data ?? []
+  // Ô tìm kiếm: gõ -> debounce -> cập nhật URL (reset về trang 1)
+  const [qInput, setQInput] = useState(search.q ?? '')
+  const debouncedQ = useDebounce(qInput, 300)
+  useEffect(() => {
+    if ((debouncedQ || undefined) !== search.q) {
+      navigate({
+        search: (prev) => ({ ...prev, q: debouncedQ || undefined, page: 1 }),
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQ])
 
-  function handleAdd() {
-    setEditing(null)
-    setFormOpen(true)
+  const params: CustomerListParams = {
+    q: search.q,
+    status: search.status,
+    lead: search.lead,
+    page,
+    pageSize: PAGE_SIZE,
+    sort,
+    dir,
   }
 
-  function handleEdit(customer: Customer) {
-    setEditing(customer)
-    setFormOpen(true)
+  const { data, isLoading, isFetching } = useCustomers(params)
+  const rows = data?.rows ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+
+  function setSearch(patch: Partial<typeof search>) {
+    navigate({ search: (prev) => ({ ...prev, ...patch }) })
   }
+
+  function toggleSort(field: CustomerSortField) {
+    setSearch({
+      sort: field,
+      dir: sort === field && dir === 'asc' ? 'desc' : 'asc',
+    })
+  }
+
+  const statusValue = search.status ?? 'all'
+  const leadValue =
+    search.lead === undefined ? 'all' : search.lead ? 'lead' : 'normal'
 
   return (
     <div className="space-y-6">
@@ -37,21 +88,104 @@ export function CustomersPage() {
             Quản lý thông tin khách hàng
           </p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button
+          onClick={() => {
+            setEditing(null)
+            setFormOpen(true)
+          }}
+        >
           <Plus />
           Thêm khách hàng
         </Button>
       </div>
 
-      <CustomerStats customers={customers} />
+      <CustomerStats />
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input
+          placeholder="Tìm theo tên, email, sđt, công ty…"
+          value={qInput}
+          onChange={(e) => setQInput(e.target.value)}
+          className="sm:max-w-xs"
+        />
+        <Select
+          value={statusValue}
+          onValueChange={(value) =>
+            setSearch({
+              status: value === 'all' ? undefined : (value as 'active'),
+              page: 1,
+            })
+          }
+        >
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Lọc trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value="active">{statusLabels.active}</SelectItem>
+            <SelectItem value="inactive">{statusLabels.inactive}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={leadValue}
+          onValueChange={(value) =>
+            setSearch({
+              lead: value === 'all' ? undefined : value === 'lead',
+              page: 1,
+            })
+          }
+        >
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Lọc tiềm năng" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả khách</SelectItem>
+            <SelectItem value="lead">Chỉ tiềm năng</SelectItem>
+            <SelectItem value="normal">Không tiềm năng</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <CustomersTable
-        data={customers}
+        data={rows}
         isLoading={isLoading}
         canDelete={isAdmin}
-        onEdit={handleEdit}
+        sort={sort}
+        dir={dir}
+        onToggleSort={toggleSort}
+        onEdit={(customer) => {
+          setEditing(customer)
+          setFormOpen(true)
+        }}
         onDelete={setDeleting}
       />
+
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-sm">
+          {total} khách hàng{isFetching ? ' · đang tải…' : ''}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-sm">
+            Trang {page}/{totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setSearch({ page: page - 1 })}
+          >
+            Trước
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setSearch({ page: page + 1 })}
+          >
+            Sau
+          </Button>
+        </div>
+      </div>
 
       <CustomerFormDialog
         open={formOpen}
