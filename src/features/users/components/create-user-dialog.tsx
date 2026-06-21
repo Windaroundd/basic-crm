@@ -41,7 +41,7 @@ export function CreateUserDialog({ open, onOpenChange }: Props) {
   const mutation = useCreateUser()
   const roleOptions: Role[] = isSuperAdmin
     ? ['staff', 'admin', 'super_admin']
-    : ['staff']
+    : ['staff', 'admin']
 
   const form = useForm<CreateUserValues>({
     resolver: zodResolver(createUserSchema),

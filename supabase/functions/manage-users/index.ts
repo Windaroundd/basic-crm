@@ -2,7 +2,7 @@
 // Dùng service_role (server-side) nên KHÔNG bao giờ lộ ra frontend.
 // Phân quyền:
 //   - super_admin: tạo/sửa/xóa mọi role (staff, admin, super_admin)
-//   - admin: chỉ quản lý staff
+//   - admin: tạo & xóa staff + admin (trừ super_admin); sửa thì chỉ staff
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const USERNAME_DOMAIN = 'users.thimut.local'
@@ -60,8 +60,11 @@ Deno.serve(async (req) => {
       return json({ error: 'Bạn không có quyền quản lý tài khoản' }, 403)
     }
 
-    // super_admin quản lý mọi role; admin chỉ quản lý staff
-    const canManageRole = (role: Role) =>
+    // super_admin: mọi role.
+    // admin: tạo/xóa được staff + admin (trừ super_admin); sửa thì chỉ staff.
+    const canCreateOrDeleteRole = (role: Role) =>
+      callerRole === 'super_admin' ? true : role !== 'super_admin'
+    const canEditRole = (role: Role) =>
       callerRole === 'super_admin' ? true : role === 'staff'
 
     const body = await req.json()
@@ -84,7 +87,7 @@ Deno.serve(async (req) => {
       if (password.length < 6) {
         return json({ error: 'Mật khẩu tối thiểu 6 ký tự' }, 400)
       }
-      if (!canManageRole(role)) {
+      if (!canCreateOrDeleteRole(role)) {
         return json({ error: 'Bạn không được tạo tài khoản role này' }, 403)
       }
 
@@ -130,7 +133,7 @@ Deno.serve(async (req) => {
         .single()
       const targetRole = target?.role as Role | undefined
       if (!targetRole) return json({ error: 'Tài khoản không tồn tại' }, 404)
-      if (!canManageRole(targetRole)) {
+      if (!canEditRole(targetRole)) {
         return json({ error: 'Bạn không có quyền sửa tài khoản này' }, 403)
       }
 
@@ -142,7 +145,7 @@ Deno.serve(async (req) => {
       }
       if (body.role) {
         const newRole = body.role as Role
-        if (!canManageRole(newRole)) {
+        if (!canEditRole(newRole)) {
           return json({ error: 'Bạn không được gán role này' }, 403)
         }
         updates.role = newRole
@@ -180,7 +183,7 @@ Deno.serve(async (req) => {
         .single()
       const targetRole = target?.role as Role | undefined
       if (!targetRole) return json({ error: 'Tài khoản không tồn tại' }, 404)
-      if (!canManageRole(targetRole)) {
+      if (!canCreateOrDeleteRole(targetRole)) {
         return json({ error: 'Bạn không có quyền xóa tài khoản này' }, 403)
       }
       const { error } = await admin.auth.admin.deleteUser(id)

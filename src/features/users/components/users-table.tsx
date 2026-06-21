@@ -39,7 +39,10 @@ export function UsersTable({
   onEdit,
   onDelete,
 }: Props) {
-  const canManage = (user: Profile) => isSuperAdmin || user.role === 'staff'
+  // admin: chỉ sửa được staff, nhưng xóa được cả admin (trừ super_admin)
+  const canEdit = (user: Profile) => isSuperAdmin || user.role === 'staff'
+  const canDelete = (user: Profile) =>
+    isSuperAdmin || user.role !== 'super_admin'
 
   return (
     <div className="rounded-lg border">
@@ -82,7 +85,7 @@ export function UsersTable({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      disabled={!canManage(user)}
+                      disabled={!canEdit(user)}
                       onClick={() => onEdit(user)}
                       aria-label="Sửa"
                     >
@@ -91,7 +94,7 @@ export function UsersTable({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      disabled={!canManage(user) || user.id === currentUserId}
+                      disabled={!canDelete(user) || user.id === currentUserId}
                       onClick={() => onDelete(user)}
                       aria-label="Xóa"
                     >
